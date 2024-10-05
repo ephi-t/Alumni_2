@@ -1,25 +1,28 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-// Sample donation data
+
 const donationData = [
   {
     id: 1,
     title: "Community Clean-Up Fund",
     description: "Help us clean up our local parks and streets.",
     image: "https://via.placeholder.com/300x200?text=Community+Clean-Up",
+    organizer: "John Doe",
   },
   {
     id: 2,
     title: "Food Drive",
     description: "Donate to help provide meals for families in need.",
     image: "https://via.placeholder.com/300x200?text=Food+Drive",
+    organizer: "Jane Smith",
   },
   {
     id: 3,
     title: "School Supplies Fund",
     description: "Support local students by providing them with essential supplies.",
     image: "https://via.placeholder.com/300x200?text=School+Supplies",
+    organizer: "Alice Johnson",
   },
   // Add more donation data as needed
 ];
@@ -61,9 +64,12 @@ const Donation = () => {
                   {donation.title}
                 </h3>
                 <p className="text-gray-600">{donation.description}</p>
+                <p className="text-gray-500 mt-2">
+                  <strong>Organizer:</strong> {donation.organizer}
+                </p>
                 <Link to={`/donations/${donation.id}/donate`}>
                   <button className="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
-                    Apply
+                    Donate
                   </button>
                 </Link>
               </div>
