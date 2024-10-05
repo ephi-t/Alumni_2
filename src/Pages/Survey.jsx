@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 
-const surveyData = [
+// Updated survey data with 'creator' field
+const initialSurveyData = [
   {
     id: 1,
     title: "Customer Satisfaction Survey",
     description: "Help us understand how we can improve our services.",
     link: "https://example.com/survey1",
     image: "https://via.placeholder.com/300x200?text=Customer+Satisfaction",
+    creator: "Admin Team",
   },
   {
     id: 2,
@@ -14,6 +16,7 @@ const surveyData = [
     description: "We want to hear your thoughts on our latest product.",
     link: "https://example.com/survey2",
     image: "https://via.placeholder.com/300x200?text=Product+Feedback",
+    creator: "Product Manager",
   },
   {
     id: 3,
@@ -21,15 +24,16 @@ const surveyData = [
     description: "Tell us about your experience at our recent event.",
     link: "https://example.com/survey3",
     image: "https://via.placeholder.com/300x200?text=Event+Feedback",
+    creator: "Event Coordinator",
   },
-  // Add more survey data as needed
 ];
 
 const Survey = () => {
+  const [surveys, setSurveys] = useState(initialSurveyData);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter surveys based on the search term
-  const filteredSurveys = surveyData.filter((survey) =>
+  const filteredSurveys = surveys.filter((survey) =>
     survey.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -62,7 +66,14 @@ const Survey = () => {
                   {survey.title}
                 </h3>
                 <p className="text-gray-600">{survey.description}</p>
-                <a href={survey.link} target="_blank" rel="noopener noreferrer">
+                <p className="text-gray-500 mt-2">
+                  <strong>Creator:</strong> {survey.creator}
+                </p>
+                <a
+                  href={survey.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <button className="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
                     Take Survey
                   </button>
