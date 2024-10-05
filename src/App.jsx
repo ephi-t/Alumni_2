@@ -12,6 +12,7 @@ import Login from "./Pages/Login";
 import CreateAccount from "./Pages/CreateAccount";
 import DashboardApp from "./Pages/DasboardApp";
 import JobApplication from "./Pages/JobApplication";
+import DonationForm from "./Pages/DonationForm";
 
 function App() {
   const location = useLocation();
@@ -30,6 +31,7 @@ function App() {
             <Route path="/alumni" element={<Alumni />} />
             <Route path="/job" element={<Job />} />
             <Route path="/donation" element={<Donation />} />
+            <Route path="/donations/:donationId/donate" element={<DonationForm />} />
             <Route path="/survey" element={<Survey />} />
             <Route path="/login" element={<Login />} />
             <Route path="/createaccount" element={<CreateAccount />} />
