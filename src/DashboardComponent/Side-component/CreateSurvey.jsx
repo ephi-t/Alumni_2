@@ -5,7 +5,7 @@ const CreateSurvey = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
-  const [creator, setCreator] = useState(""); 
+  const [creator, setCreator] = useState("");
   const [surveyImage, setSurveyImage] = useState(null);
 
   const handleImageChange = (e) => {
