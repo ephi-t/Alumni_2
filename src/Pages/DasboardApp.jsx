@@ -13,6 +13,8 @@ import CreateSurvey from "../DashboardComponent/Side-component/CreateSurvey";
 import Alumnilist from "../DashboardComponent/Side-component/Alumnilist";
 import ManageSurvey from "../DashboardComponent/Side-component/ManageSurvey";
 import ManageJob from "../DashboardComponent/Side-component/ManageJob";
+import ManageDonation from "../DashboardComponent/Side-component/ManageDonation";
+
 
 function DashboardApp() {
   const [isSidebarOpen, setisSidebarOpen] = useState(false);
@@ -38,6 +40,7 @@ function DashboardApp() {
           <Route path="/managesurvey" element={<ManageSurvey />} />
           <Route path="/createsurvey" element={<CreateSurvey />} />
           <Route path="/createdonation" element={<CreateDonation />} />
+          <Route path="/managedonation" element={<ManageDonation />} />
         </Routes>
       </Main>
     </div>
