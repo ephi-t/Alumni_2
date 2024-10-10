@@ -5,6 +5,8 @@ const CreateJob = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [companyName, setCompanyName] = useState(""); // New state for company name
+  const [deadline, setDeadline] = useState(""); // New state for deadline
   const [jobImage, setJobImage] = useState(null);
 
   const handleImageChange = (e) => {
@@ -13,11 +15,12 @@ const CreateJob = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Form submission logic goes here
   };
 
   return (
-    <div className="container  flex items-center justify-center">
-      <div className="bg-white rounded-lg  border  border-slate-500 p-8 w-full md:w-4/5 lg:w-3/5">
+    <div className="container flex items-center justify-center">
+      <div className="bg-white rounded-lg border border-slate-500 p-8 w-full md:w-4/5 lg:w-3/5">
         <h2 className="text-2xl font-semibold mb-6 text-center">Create Job</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -35,6 +38,24 @@ const CreateJob = () => {
               className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Company Name */}
+          <div>
+            <label
+              htmlFor="companyName"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Company Name
+            </label>
+            <input
+              type="text"
+              id="companyName"
+              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
               required
             />
           </div>
@@ -71,6 +92,24 @@ const CreateJob = () => {
               className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Deadline */}
+          <div>
+            <label
+              htmlFor="deadline"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Application Deadline
+            </label>
+            <input
+              type="date"
+              id="deadline"
+              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
               required
             />
           </div>

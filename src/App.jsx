@@ -7,11 +7,14 @@ import Donation from "./Pages/Donation";
 import Survey from "./Pages/Survey";
 import Home from "./Pages/Home";
 import Event from "./Pages/Event";
+import EventRegister from "./Pages/EventRegister";
 import Footer from "./Components/Footer";
 import Login from "./Pages/Login";
 import CreateAccount from "./Pages/CreateAccount";
 import DashboardApp from "./Pages/DasboardApp";
 import JobApplication from "./Pages/JobApplication";
+import DonationForm from "./Pages/DonationForm";
+
 
 function App() {
   const location = useLocation();
@@ -27,9 +30,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/event" element={<Event />} />
+            <Route path="/events/:eventId/register" element={<EventRegister />} />
             <Route path="/alumni" element={<Alumni />} />
             <Route path="/job" element={<Job />} />
             <Route path="/donation" element={<Donation />} />
+            <Route path="/donations/:donationId/donate" element={<DonationForm />} />
             <Route path="/survey" element={<Survey />} />
             <Route path="/login" element={<Login />} />
             <Route path="/createaccount" element={<CreateAccount />} />

@@ -1,5 +1,6 @@
 import React from "react";
 import { assets } from "../assets/assets";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -26,6 +27,9 @@ const Footer = () => {
             <li>About Us</li>
             <li>Contact Us</li>
             <li>Privacy Policy</li>
+            <NavLink to="/survey">
+            <li className="text-black cursor-pointer hover:underline font-bold ">Survey</li>
+            </NavLink>
           </ul>
         </div>
         {/* Right section */}

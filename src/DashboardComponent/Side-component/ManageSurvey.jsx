@@ -1,85 +1,108 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
+import { Button } from "primereact/button";
 import { FilterMatchMode } from "primereact/api";
 import { InputText } from "primereact/inputtext";
-import { CiSearch } from "react-icons/ci"; // Importing the search icon
+import { CiSearch } from "react-icons/ci"; // Search icon
+import { Dialog } from "primereact/dialog"; // Dialog for editing
+import { AiFillEdit } from "react-icons/ai"; // Edit icon
+import { BiTrash } from "react-icons/bi"; // Trash icon
+import { ToastContainer, toast } from "react-toastify"; // Using react-toastify
+import "react-toastify/dist/ReactToastify.css";
 
-const ManageSurvey = () => {
+const ManageDonation = () => {
+  const [donations, setDonations] = useState([]);
   const [filters, setFilters] = useState({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
 
-  const data = [
-    {
-      id: 1,
-      title: "Feedback Survey",
-      description:
-        "A survey to gather feedback on the recent alumni event for improvements.",
-      link: "https://example.com/feedback-survey",
-    },
-    {
-      id: 2,
-      title: "Career Development Survey",
-      description:
-        "A survey to assess the effectiveness of the career development workshops.",
-      link: "https://example.com/career-survey",
-    },
-    {
-      id: 3,
-      title: "Alumni Engagement Survey",
-      description:
-        "Gathering data on alumni engagement and interests to enhance community.",
-      link: "https://example.com/alumni-engagement",
-    },
-  ];
+  const [editingDonation, setEditingDonation] = useState(null); // State to hold the donation being edited
+  const [showDialog, setShowDialog] = useState(false); // State to control dialog visibility
+  const [loading, setLoading] = useState(true); // Loading state
+
+  useEffect(() => {
+    // Simulate fetching data from an API
+    setTimeout(() => {
+      setDonations([
+        {
+          id: 1,
+          title: "Community Library Fund",
+          description: "Help us build a community library.",
+          amount: "$5000",
+        },
+        {
+          id: 2,
+          title: "Scholarship Fund",
+          description: "Support students in need of financial aid.",
+          amount: "$3000",
+        },
+        {
+          id: 3,
+          title: "New Playground Equipment",
+          description: "Fund new equipment for the community park.",
+          amount: "$2000",
+        },
+      ]);
+      setLoading(false); // Set loading to false once data is fetched
+    }, 1000); // Simulate 1 second delay for data fetching
+  }, []);
 
   const actionBodyTemplate = (rowData) => {
     return (
       <div className="flex gap-2">
-        <button
-          className="flex justify-center items-center w-8 h-8 bg-gray-300 rounded-full hover:bg-teal-400 transition duration-300"
-          title="Edit"
-        >
-          ✎
-        </button>
-        <button
-          className="flex justify-center items-center w-8 h-8 bg-gray-300 rounded-full hover:bg-red-400 transition duration-300"
-          title="Delete"
-        >
-          🗑
-        </button>
+        <Button
+          icon={<AiFillEdit className="text-xl" />} // Using AiFillEdit for the Edit icon
+          onClick={() => handleEdit(rowData)}
+          className="p-button-rounded p-button-warning"
+        />
+        <Button
+          icon={<BiTrash className="text-xl" />} // Using BiTrash for Delete icon
+          onClick={() => handleDelete(rowData.id)}
+          className="p-button-rounded p-button-danger"
+        />
       </div>
     );
   };
 
-  // Function to limit the description length
-  const limitedDescriptionTemplate = (rowData) => {
-    const maxLength = 50; // Set the max number of characters
-    const truncatedDescription =
-      rowData.description.length > maxLength
-        ? rowData.description.substring(0, maxLength) + "..."
-        : rowData.description;
-    return <span>{truncatedDescription}</span>;
+  const handleEdit = (donation) => {
+    setEditingDonation(donation); // Set the donation to be edited
+    setShowDialog(true); // Show the dialog
+  };
+
+  const handleDelete = (id) => {
+    setDonations(donations.filter((donation) => donation.id !== id));
+    toast.success("Donation deleted successfully!", { autoClose: 3000 });
+  };
+
+  const handleSave = () => {
+    if (editingDonation) {
+      const updatedDonations = donations.map((donation) =>
+        donation.id === editingDonation.id ? editingDonation : donation
+      );
+      setDonations(updatedDonations);
+      setShowDialog(false);
+      setEditingDonation(null);
+      toast.success("Donation updated successfully!", { autoClose: 3000 });
+    }
   };
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-semibold mb-6">Manage Surveys</h2>
+      <ToastContainer />
+      <h2 className="text-2xl font-semibold mb-6">Manage Donations</h2>
 
       {/* Search bar with icon on the left */}
       <div className="relative mb-4 w-[25%]">
-        <div className="flex items-center border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-          {/* Icon on the left side */}
+        <div className="flex items-center rounded-lg shadow-sm">
           <span className="px-3 text-gray-500">
             <CiSearch className="text-xl" />
           </span>
 
-          {/* Input field without border */}
           <InputText
-            placeholder="Search Surveys..."
+            placeholder="Search Donations..."
             onInput={(e) => {
               setFilters({
                 ...filters,
@@ -94,23 +117,102 @@ const ManageSurvey = () => {
         </div>
       </div>
 
-      <DataTable
-        className="rounded-lg bg-cyan-400"
-        value={data}
-        filters={filters}
+      {loading ? ( // Show a loading message while fetching data
+        <div className="text-center text-gray-500">Loading...</div>
+      ) : (
+        <DataTable
+          className="rounded-lg bg-cyan-400"
+          value={donations}
+          filters={filters}
+        >
+          <Column field="id" header="ID" sortable />
+          <Column field="title" header="Donation Title" sortable />
+          <Column field="description" header="Description" sortable />
+          <Column field="amount" header="Amount" sortable />
+          <Column body={actionBodyTemplate} header="Actions" />
+        </DataTable>
+      )}
+
+      {/* Dialog for editing donation */}
+      <Dialog
+        header="Edit Donation"
+        visible={showDialog}
+        onHide={() => setShowDialog(false)}
+        style={{ width: "50vw" }}
+        footer={
+          <div>
+            <Button
+              label="Cancel"
+              icon="pi pi-times"
+              onClick={() => setShowDialog(false)}
+              className="p-button-text"
+            />
+            <Button label="Save" icon="pi pi-check" onClick={handleSave} />
+          </div>
+        }
       >
-        <Column field="id" header="ID" sortable />
-        <Column field="title" header="Survey Title" sortable />
-        <Column
-          field="description"
-          header="Description"
-          body={limitedDescriptionTemplate} // Custom template for description
-        />
-        <Column field="link" header="Survey Link" sortable />
-        <Column body={actionBodyTemplate} header="Actions" />
-      </DataTable>
+        {editingDonation && (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label
+                htmlFor="title"
+                className="block text-gray-700 font-semibold"
+              >
+                Title
+              </label>
+              <input
+                id="title"
+                value={editingDonation.title}
+                onChange={(e) =>
+                  setEditingDonation({ ...editingDonation, title: e.target.value })
+                }
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="description"
+                className="block text-gray-700 font-semibold"
+              >
+                Description
+              </label>
+              <textarea
+                id="description"
+                value={editingDonation.description}
+                onChange={(e) =>
+                  setEditingDonation({
+                    ...editingDonation,
+                    description: e.target.value,
+                  })
+                }
+                rows={3}
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="amount"
+                className="block text-gray-700 font-semibold"
+              >
+                Amount
+              </label>
+              <input
+                id="amount"
+                value={editingDonation.amount}
+                onChange={(e) =>
+                  setEditingDonation({
+                    ...editingDonation,
+                    amount: e.target.value,
+                  })
+                }
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 };
 
-export default ManageSurvey;
+export default ManageDonation;
