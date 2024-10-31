@@ -1,147 +1,232 @@
 import React, { useState } from "react";
-import { FiUpload, FiEdit, FiTrash2 } from "react-icons/fi"; // Import icons
-import { ToastContainer, toast } from "react-toastify"; // Using react-toastify
+import { FiUpload } from "react-icons/fi";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../../../api.js";
 
 const CreateEvent = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [eventDate, setEventDate] = useState(""); // Store the date and time as a string
-  const [eventImage, setEventImage] = useState(null);
+  const inputStyle =
+    "w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all";
+  const labelStyle = "text-sm font-semibold text-gray-700 mb-2 block";
+  const headerStyle =
+    "bg-gradient-to-r from-teal-500 to-teal-700 p-6 text-white";
+  const buttonStyle =
+    "w-full bg-gradient-to-r from-teal-500 to-teal-700 text-white py-3 rounded-lg font-medium hover:from-teal-600 hover:to-teal-800 transform hover:scale-[1.02] transition-all duration-300";
 
-  const handleImageChange = (e) => {
-    setEventImage(e.target.files[0]);
+  const [formData, setFormData] = useState({
+    event_title: "",
+    description: "",
+    dateTime: "",
+    location: "",
+    image: null,
+  });
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: name === "image" ? files[0] : value,
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast.success("Event Created successfully!", { autoClose: 3000 });
-    // Handle form submission logic here
-    console.log({ title, description, location, eventDate, eventImage });
+    const eventData = new FormData();
+    eventData.append("event_title", formData.event_title);
+    eventData.append("description", formData.description);
+    eventData.append("dateTime", formData.dateTime);
+    eventData.append("location", formData.location);
+    if (formData.image) {
+      eventData.append("image", formData.image, formData.image.name);
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("You must be logged in to create an event.");
+        return;
+      }
+
+      await api.post("/events", eventData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success("Event created successfully!");
+      setFormData({
+        event_title: "",
+        description: "",
+        dateTime: "",
+        location: "",
+        image: null,
+      });
+    } catch (error) {
+      console.error("Error creating event:", error);
+      if (error.response?.data?.message) {
+        toast.error(`Failed to create event: ${error.response.data.message}`);
+      } else if (error.request) {
+        toast.error(
+          "No response received from server. Please check if the backend is running."
+        );
+      } else {
+        toast.error(
+          "Failed to create event. Please check your network connection and try again."
+        );
+      }
+    }
   };
 
   return (
-    <div className="container  flex items-center justify-center">
+    <div className="w-full min-h-screen bg-gray-50/50">
       <ToastContainer />
-      <div className="bg-white rounded-lg border border-slate-500 p-8 w-full md:w-4/5 lg:w-3/5">
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          Create Event
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Event Title */}
-          <div className="md:grid md:grid-cols-2 md:gap-4 space-y-4 sm:space-y-0">
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Event Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Event Date and Time Input */}
-            <div>
-              <label
-                htmlFor="eventDate"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Event Date & Time
-              </label>
-              <input
-                type="datetime-local"
-                id="eventDate"
-                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)} // Capture both date and time
-                required
-              />
-            </div>
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className={headerStyle}>
+            <h2 className="text-3xl font-bold">Create New Event</h2>
+            <p className="mt-2 opacity-90">
+              Fill in the details to create a new event
+            </p>
           </div>
 
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Description
-            </label>
-            <textarea
-              id="description"
-              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              rows="5"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            ></textarea>
-          </div>
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Event Title */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Event Title
+                </label>
+                <input
+                  type="text"
+                  name="event_title"
+                  value={formData.event_title}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                  required
+                />
+              </div>
 
-          {/* Location */}
-          <div>
-            <label
-              htmlFor="location"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Location
-            </label>
-            <input
-              type="text"
-              id="location"
-              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-            />
-          </div>
+              {/* DateTime */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  name="dateTime"
+                  value={formData.dateTime}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                  required
+                />
+              </div>
 
-          {/* Event Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Upload Event Image
-            </label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
-              <div className="space-y-1 text-center">
-                <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                <div className="text-sm text-gray-600">
-                  <label
-                    htmlFor="eventImage"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500"
-                  >
-                    <span>Upload a file</span>
-                    <input
-                      id="eventImage"
-                      name="eventImage"
-                      type="file"
-                      className="sr-only"
-                      onChange={handleImageChange}
-                    />
-                  </label>
+              {/* Description */}
+              <div className="col-span-2">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                  required
+                ></textarea>
+              </div>
+
+              {/* Location */}
+              <div className="col-span-2">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div className="col-span-2">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Event Image
+                </label>
+                <div
+                  className={`relative group cursor-pointer rounded-lg overflow-hidden
+                  ${
+                    formData.image
+                      ? "border-2 border-teal-500"
+                      : "border-2 border-dashed border-gray-300"
+                  }
+                  hover:border-teal-500 transition-all duration-300`}
+                >
+                  <input
+                    type="file"
+                    name="image"
+                    onChange={handleChange}
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="space-y-1 text-center">
+                    {formData.image ? (
+                      <>
+                        <img
+                          src={URL.createObjectURL(formData.image)}
+                          alt="Event Preview"
+                          className="mx-auto h-32 w-32 object-cover rounded-md"
+                        />
+                        <p className="text-sm text-purple-600">
+                          Event image selected
+                        </p>
+                      </>
+                    ) : (
+                      <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
+                    )}
+                    <div className="text-sm text-gray-600">
+                      <label
+                        htmlFor="image"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500"
+                      >
+                        <span>
+                          {formData.image
+                            ? "Change Image"
+                            : "Upload Event Image"}
+                        </span>
+                        <input
+                          id="image"
+                          name="image"
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={handleChange}
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 5MB
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
               </div>
             </div>
-          </div>
 
-          {/* Create Post Button */}
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg w-full sm:w-auto"
-            >
-              Create Event
-            </button>
-          </div>
-        </form>
+            {/* Submit Button */}
+            <div className="pt-4">
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-teal-500 to-teal-700 text-white py-3 rounded-lg font-medium hover:from-teal-600 hover:to-teal-800 transform hover:scale-[1.02] transition-all duration-300"
+              >
+                Create Event
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

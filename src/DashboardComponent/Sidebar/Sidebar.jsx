@@ -10,7 +10,7 @@ import { FcSurvey } from "react-icons/fc";
 const Sidebar = ({ isSidebarOpen }) => {
   const [isEventDropdownOpen, setIsEventDropdownOpen] = useState(false);
   const [isJobDropdownOpen, setIsJobDropdownOpen] = useState(false);
-  const [isDonationDropdownOpen, setIsDonationDropdownOpen] = useState(false);
+
   const [isSurveyDropOpen, setSurveyIsDropdownOpen] = useState(false);
   const [isAlumniListDropOpen, setIsAlumniListDropOpen] = useState(false);
 
@@ -27,11 +27,6 @@ const Sidebar = ({ isSidebarOpen }) => {
 
   const toggleJobDropdown = () => {
     setIsJobDropdownOpen(!isJobDropdownOpen);
-  };
-
-  const toggleDonationDropdown = () => {
-    // New toggle function for Donations
-    setIsDonationDropdownOpen(!isDonationDropdownOpen);
   };
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -136,46 +131,6 @@ const Sidebar = ({ isSidebarOpen }) => {
             )}
           </li>
 
-          {/* Donation Dropdown */}
-          <li>
-            <button
-              onClick={toggleDonationDropdown} // Using the new toggle function
-              className="p-2 text-gray-900 flex items-center justify-between hover:bg-gray-100 rounded-lg w-full"
-            >
-              <div className="flex items-center">
-                <FaDollarSign className="mr-2" />
-                Donations
-              </div>
-              <span
-                className={`${
-                  isDonationDropdownOpen ? "rotate-180" : ""
-                } transition-transform`}
-              >
-                &#9660; {/* Arrow icon */}
-              </span>
-            </button>
-            {isDonationDropdownOpen && ( // Render dropdown items when open
-              <ul className="ml-6 mt-2 space-y-2">
-                <li>
-                  <NavLink
-                    to="createdonation"
-                    className="p-2 text-gray-900 flex items-center hover:bg-gray-100 rounded-lg"
-                  >
-                    Create Donation
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to="managedonation"
-                    className="p-2 text-gray-900 flex items-center hover:bg-gray-100 rounded-lg"
-                  >
-                    Manage Donation
-                  </NavLink>
-                </li>
-              </ul>
-            )}
-          </li>
-
           <li>
             <button
               onClick={toggleSurveyDropdown} // Using the new toggle function
@@ -226,20 +181,11 @@ const Sidebar = ({ isSidebarOpen }) => {
           </li>
           <li>
             <NavLink
-              to="alumnilist"
+              to="manageuser"
               className="p-2 text-gray-900 flex items-center hover:bg-gray-100 rounded-lg"
             >
               <HiOutlineUserGroup className="mr-2" />
               Alumni
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="currentstudent"
-              className="p-2 text-gray-900 flex items-center hover:bg-gray-100 rounded-lg"
-            >
-              <HiOutlineUserGroup className="mr-2" />
-              Current Student
             </NavLink>
           </li>
         </ul>

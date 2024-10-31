@@ -1,72 +1,150 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { assets } from "../assets/assets";
 import { NavLink, useNavigate } from "react-router-dom";
-
-import { GiHamburgerMenu } from "react-icons/gi";
+import { useAuth } from "../AuthContext";
+import api from "../../api";
+import { IoCloseOutline } from "react-icons/io5";
+import { RxHamburgerMenu } from "react-icons/rx";
 
 const NavBar = () => {
   const navigate = useNavigate();
+  const { isLoggedIn, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
-  const [token, setToken] = useState(true);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (isLoggedIn) {
+        try {
+          const response = await api.get("/users/profile");
+          setUserData(response.data);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [isLoggedIn]);
+
+  const handleLogout = () => {
+    logout();
+    setUserData(null);
+    navigate("/login");
+  };
 
   return (
-    <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400 ">
+    <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400">
       <img
-        onClick={() => {
-          navigate("/");
-        }}
-        className="w-24 md:w-32  cursor-pointer"
+        onClick={() => navigate("/")}
+        className="w-24 md:w-32 cursor-pointer"
         src={assets.dbulogo}
-        alt=""
+        alt="Logo"
       />
 
+      {/* Navigation Links - Desktop */}
       <ul className="hidden font-semibold md:flex items-start gap-5 font-me">
-        <NavLink to="/">
-          <li className="py-1 uppercase">Home</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            `py-1 uppercase ${
+              isActive
+                ? "text-teal-500 border-b-2 border-teal-500"
+                : "text-gray-700 hover:text-teal-500"
+            }`
+          }
+        >
+          <li>Home</li>
         </NavLink>
-        <NavLink to="/event">
-          <li className="py-1 uppercase">Event</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+        <NavLink
+          to="/event"
+          className={({ isActive }) =>
+            `py-1 uppercase ${
+              isActive
+                ? "text-teal-500 border-b-2 border-teal-500"
+                : "text-gray-700 hover:text-teal-500"
+            }`
+          }
+        >
+          <li>Event</li>
         </NavLink>
-        <NavLink to="/alumni">
-          <li className="py-1 uppercase">Alumni</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+        <NavLink
+          to="/alumni"
+          className={({ isActive }) =>
+            `py-1 uppercase ${
+              isActive
+                ? "text-teal-500 border-b-2 border-teal-500"
+                : "text-gray-700 hover:text-teal-500"
+            }`
+          }
+        >
+          <li>Alumni</li>
         </NavLink>
-        <NavLink to="/job">
-          <li className="py-1 uppercase">Job</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+        <NavLink
+          to="/job"
+          className={({ isActive }) =>
+            `py-1 uppercase ${
+              isActive
+                ? "text-teal-500 border-b-2 border-teal-500"
+                : "text-gray-700 hover:text-teal-500"
+            }`
+          }
+        >
+          <li>Job</li>
         </NavLink>
-        <NavLink to="/donation">
-          <li className="py-1 uppercase">Donation</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
-        </NavLink>
-        <NavLink to="/dashboard">
-          <li className="py-1 uppercase">Dashboard</li>
-          <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+        <NavLink
+          to="/survey"
+          className={({ isActive }) =>
+            `py-1 uppercase ${
+              isActive
+                ? "text-teal-500 border-b-2 border-teal-500"
+                : "text-gray-700 hover:text-teal-500"
+            }`
+          }
+        >
+          <li>Survey</li>
         </NavLink>
       </ul>
 
-      <div className=" flex  items-center gap-4">
-        {token ? (
+      {/* User Profile Section */}
+      <div className="flex items-center gap-4">
+        {isLoggedIn && userData ? (
           <div className="flex items-center gap-2 cursor-pointer group relative">
-            <img className="w-8 rounded-full" src={assets.profile_pic} alt="" />
-            <img className="w-2.5 " src={assets.dropdown_icon} alt="" />
-            <div className="absolute top-0 right-0 pt-14 font-medium text-gray-600 z-20 hidden  group-hover:block">
-              <div className=" bg-stone-100 rounded flex flex-col gap-4 p-4 ">
-                <p
-                  onClick={() => {
-                    navigate("my-profile");
-                  }}
-                  className="hover:text-black cursor-pointer"
-                >
-                  My Profile
-                </p>
+            <img
+              className="w-8 h-8 rounded-full object-cover"
+              src={
+                userData.profile_image
+                  ? `${import.meta.env.VITE_API_URL}${userData.profile_image}`
+                  : assets.profile_pic
+              }
+              alt={`${userData.first_name}'s profile`}
+            />
+            <span className="hidden md:block text-gray-700">
+              {userData.first_name} {userData.last_name}
+            </span>
+            <img className="w-2.5" src={assets.dropdown_icon} alt="Dropdown" />
 
+            {/* Dropdown Menu */}
+            {/* Dropdown Menu */}
+            <div className="absolute top-0 right-0 pt-14 font-medium text-gray-600 z-20 hidden group-hover:block">
+              <div className="bg-stone-100 rounded flex flex-col gap-4 p-4">
+                {userData.isAdmin ? (
+                  <p
+                    onClick={() => navigate("/dashboard")}
+                    className="hover:text-black cursor-pointer"
+                  >
+                    Dashboard
+                  </p>
+                ) : (
+                  <p
+                    onClick={() => navigate("/profile")}
+                    className="hover:text-black cursor-pointer"
+                  >
+                    Profile
+                  </p>
+                )}
                 <p
-                  onClick={() => {
-                    setToken(false);
-                  }}
+                  onClick={handleLogout}
                   className="hover:text-black cursor-pointer"
                 >
                   LogOut
@@ -75,67 +153,126 @@ const NavBar = () => {
             </div>
           </div>
         ) : (
-          <button
-            onClick={() => {
-              navigate("/createaccount");
-            }}
-            className="bg-teal-500 font-semibold text-white px-2 py-3 rounded-full  hidden md:block  "
-          >
-            Create Accout
-          </button>
+          <>
+            <button
+              onClick={() => navigate("/login")}
+              className="bg-blue-500 text-white px-4 py-2 rounded-full"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate("/createaccount")}
+              className="bg-teal-500 text-white px-4 py-2 rounded-full"
+            >
+              Create Account
+            </button>
+          </>
         )}
+      </div>
 
-        <img
-          onClick={() => {
-            setShowMenu(true);
-          }}
-          className="w-6 md:hidden"
-          src={assets.menu_icon}
-          alt=""
-        />
+      {/* Mobile Menu Button */}
+      <div className={`md:hidden ${showMenu ? "hidden" : "block"}`}>
+        <button onClick={() => setShowMenu(!showMenu)}>
+          <RxHamburgerMenu className="w-6 h-6" />
+        </button>
+      </div>
 
-        {/* mobile menu */}
-        <div
-          className={`${
-            showMenu ? `fixed w-full ` : `h-0 w-0`
-          } md:hidden right-0 top-0 bottom-0 z-20 overflow-hidden bg-white transition-all`}
-        >
-          <div className="flex items-center justify-between px-5 py-6">
-            <img className="w-36" src={assets.dbulogo} alt="" />
-            <img
-              className="w-7"
-              onClick={() => {
-                setShowMenu(false);
-              }}
-              src={assets.cross_icon}
-              alt=""
-            />
+      {/* Mobile menu */}
+      {showMenu && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 z-50">
+          <div className="flex justify-end p-4">
+            <button onClick={() => setShowMenu(false)}>
+              <IoCloseOutline className="w-6 h-6 text-white" />
+            </button>
           </div>
-
-          <ul className="flex flex-col items-center gap-2 mt-5 px-5 text-lg font-medium">
-            <NavLink onClick={() => setShowMenu(false)} to="/">
-              <p className="px-4 py-2 rounded inline-block"> Home</p>
+          <ul className="flex flex-col items-center gap-2 mt-5 px-5 text-lg font-medium text-white">
+            <NavLink
+              onClick={() => setShowMenu(false)}
+              to="/"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded inline-block ${
+                  isActive
+                    ? "text-teal-500 bg-white"
+                    : "text-white hover:bg-gray-700"
+                }`
+              }
+            >
+              <p>Home</p>
             </NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/event">
-              <p className="px-4 py-2 rounded inline-block">Event</p>
+            <NavLink
+              onClick={() => setShowMenu(false)}
+              to="/event"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded inline-block ${
+                  isActive
+                    ? "text-teal-500 bg-white"
+                    : "text-white hover:bg-gray-700"
+                }`
+              }
+            >
+              <p>Event</p>
             </NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/alumni">
-              <p className="px-4 py-2 rounded inline-block"> Alumni</p>
+            <NavLink
+              onClick={() => setShowMenu(false)}
+              to="/alumni"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded inline-block ${
+                  isActive
+                    ? "text-teal-500 bg-white"
+                    : "text-white hover:bg-gray-700"
+                }`
+              }
+            >
+              <p>Alumni</p>
             </NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/job">
-              <p className="px-4 py-2 rounded inline-block"> Job</p>
+            <NavLink
+              onClick={() => setShowMenu(false)}
+              to="/job"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded inline-block ${
+                  isActive
+                    ? "text-teal-500 bg-white"
+                    : "text-white hover:bg-gray-700"
+                }`
+              }
+            >
+              <p>Job</p>
             </NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to="/dashboard">
-              <p className=" bg-blue-300 px-4 py-2 rounded inline-block hover:scale-105 transition-all duration-300">
-                {" "}
-                Dashboard
-              </p>
+            <NavLink
+              onClick={() => setShowMenu(false)}
+              to="/survey"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded inline-block ${
+                  isActive
+                    ? "text-teal-500 bg-white"
+                    : "text-white hover:bg-gray-700"
+                }`
+              }
+            >
+              <p>Survey</p>
             </NavLink>
+            {isLoggedIn && userData?.isAdmin && (
+              <NavLink onClick={() => setShowMenu(false)} to="/dashboard">
+                <p className="bg-blue-300 px-4 py-2 rounded inline-block hover:scale-105 transition-all duration-300">
+                  Dashboard
+                </p>
+              </NavLink>
+            )}
+            {!isLoggedIn && (
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  navigate("/createaccount");
+                }}
+                className="bg-teal-500 font-semibold text-white px-4 py-2 rounded-full w-full"
+              >
+                Create Account
+              </button>
+            )}
           </ul>
         </div>
-      </div>
+      )}
     </div>
   );
 };
-
 export default NavBar;

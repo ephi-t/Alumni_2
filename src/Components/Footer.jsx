@@ -3,6 +3,13 @@ import { assets } from "../assets/assets";
 import { NavLink, useNavigate } from "react-router-dom";
 
 const Footer = () => {
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
   return (
     <div className="md:mx-10 mt-40">
       <hr className="my-5 border border-spacing-3.5" />
@@ -23,12 +30,27 @@ const Footer = () => {
         <div>
           <p className="text-xl font-medium mb-5">COMPANY</p>
           <ul className="flex flex-col gap-2 text-gray-600 ">
-            <li>Home</li>
-            <li>About Us</li>
-            <li>Contact Us</li>
-            <li>Privacy Policy</li>
+            <NavLink to="/">
+              <li
+                className=" uppercase"
+                onClick={() => {
+                  scrollToTop();
+                }}
+              >
+                Home
+              </li>
+            </NavLink>
+            <NavLink to="/event">
+              <li className="uppercase">Event</li>
+            </NavLink>
+            <NavLink to="/alumni">
+              <li className=" uppercase">Alumni</li>
+            </NavLink>
+            <NavLink to="/job">
+              <li className=" uppercase">Job</li>
+            </NavLink>
             <NavLink to="/survey">
-            <li className="text-black cursor-pointer hover:underline font-bold ">Survey</li>
+              <li className="uppercase">Survey</li>
             </NavLink>
           </ul>
         </div>

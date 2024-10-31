@@ -1,88 +1,110 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import { FilterMatchMode } from "primereact/api";
 import { InputText } from "primereact/inputtext";
-import { CiSearch } from "react-icons/ci"; // Search icon
-import { Button } from "primereact/button"; // Button for actions
-import { Dialog } from "primereact/dialog"; // Dialog for editing
-import { InputTextarea } from "primereact/inputtextarea"; // InputTextarea for description
-import { AiFillEdit } from "react-icons/ai"; // New Edit icon
-import { BiTrash } from "react-icons/bi"; // Trash icon
-import { ToastContainer, toast } from "react-toastify"; // Using react-toastify
+import { CiSearch } from "react-icons/ci";
+import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
+import { AiFillEdit } from "react-icons/ai";
+import { BiTrash } from "react-icons/bi";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import api from "../../../api.js";
 const ManageEvent = () => {
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "Annual Meeting",
-      time: "2024-10-15T10:00",
-      location: "New York City",
-      description: "Annual meeting for all staff members.",
-    },
-    {
-      id: 2,
-      title: "Charity Run",
-      time: "2024-11-01T08:00",
-      location: "Addis Ababa",
-      description: "Charity run to support local schools.",
-    },
-    {
-      id: 3,
-      title: "Tech Conference",
-      time: "2024-12-05T09:30",
-      location: "Bahir Dar",
-      description: "Tech conference with various speakers.",
-    },
-  ]);
-
+  const [events, setEvents] = useState([]);
   const [filters, setFilters] = useState({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [editingEvent, setEditingEvent] = useState(null); // State to hold the event being edited
-  const [showDialog, setShowDialog] = useState(false); // State to control dialog visibility
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
-  const actionBodyTemplate = (rowData) => {
-    return (
-      <div className="flex gap-2">
-        <Button
-          icon={<AiFillEdit className="text-xl" />} // Using AiFillEdit for the Edit icon
-          onClick={() => handleEdit(rowData)}
-          className="p-button-rounded p-button-warning"
-        />
-        <Button
-          icon={<BiTrash className="text-xl" />} // Using BiTrash for Delete icon
-          onClick={() => handleDelete(rowData.id)}
-          className="p-button-rounded p-button-danger"
-        />
-      </div>
-    );
+  const fetchEvents = async () => {
+    try {
+      const response = await api.get("/events");
+      setEvents(response.data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      toast.error("Failed to fetch events. Please try again.");
+      setLoading(false);
+    }
   };
 
   const handleEdit = (event) => {
-    setEditingEvent(event); // Set the event to be edited
-    setShowDialog(true); // Show the dialog
+    setEditingEvent(event);
+    setShowDialog(true);
   };
 
-  const handleDelete = (id) => {
-    setEvents(events.filter((event) => event.id !== id));
-    toast.success("Event deleted successfully!", { autoClose: 3000 });
-  };
-
-  const handleSave = () => {
-    if (editingEvent) {
-      const updatedEvents = events.map((event) =>
-        event.id === editingEvent.id ? editingEvent : event
-      );
-      setEvents(updatedEvents);
-      setShowDialog(false);
-      setEditingEvent(null);
-      toast.success("Event updated successfully!", { autoClose: 3000 });
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/events/${id}`);
+      await fetchEvents();
+      toast.success("Event deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Failed to delete event. Please try again.");
     }
+  };
+
+  const handleSave = async () => {
+    if (editingEvent) {
+      const formData = new FormData();
+      for (const key in editingEvent) {
+        if (key !== "image") {
+          formData.append(key, editingEvent[key]);
+        }
+      }
+      if (editingEvent.image instanceof File) {
+        formData.append("image", editingEvent.image, editingEvent.image.name);
+      }
+
+      try {
+        const response = await api.patch(
+          `/events/${editingEvent._id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        toast.success("Event updated successfully!");
+        await fetchEvents();
+        setShowDialog(false);
+        setEditingEvent(null);
+      } catch (error) {
+        console.error("Error updating event:", error);
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to update event. Please try again."
+        );
+      }
+    }
+  };
+
+  const actionBodyTemplate = (rowData) => {
+    return (
+      <div className="flex justify-center space-x-2">
+        <Button
+          icon={<AiFillEdit />}
+          className="text-emerald-500 hover:text-emerald-700 border-none text-sm px-3 py-1 transition-colors focus:ring-0 focus:shadow-none"
+          onClick={() => handleEdit(rowData)}
+        />
+        <Button
+          icon={<BiTrash />}
+          className="text-rose-500 hover:text-rose-700 border-none text-sm px-3 py-1 transition-colors focus:ring-0 focus:shadow-none"
+          onClick={() => handleDelete(rowData._id)}
+        />
+      </div>
+    );
   };
 
   return (
@@ -90,13 +112,11 @@ const ManageEvent = () => {
       <ToastContainer />
       <h2 className="text-2xl font-semibold mb-6">Manage Events</h2>
 
-      {/* Search bar with icon on the left */}
       <div className="relative mb-4 w-[25%]">
         <div className="flex items-center rounded-lg shadow-sm">
           <span className="px-3 text-gray-500">
             <CiSearch className="text-xl" />
           </span>
-
           <InputText
             placeholder="Search Events..."
             onInput={(e) => {
@@ -108,29 +128,37 @@ const ManageEvent = () => {
                 },
               });
             }}
-            className="p-2 w-full focus:outline-none border-none" // Removed the border from the input
+            className="p-2 w-full focus:outline-none border-none"
           />
         </div>
       </div>
 
-      <DataTable
-        className="rounded-lg bg-cyan-400"
-        value={events}
-        filters={filters}
-      >
-        <Column field="id" header="ID" sortable />
-        <Column field="title" header="Event Title" sortable />
-        <Column field="time" header="Event Time" sortable />
-        <Column field="location" header="Event Location" sortable />
-        <Column body={actionBodyTemplate} header="Actions" />
-      </DataTable>
+      {loading ? (
+        <div className="text-center text-gray-500">Loading...</div>
+      ) : (
+        <DataTable
+          value={events}
+          filters={filters}
+          className="rounded-lg shadow-sm"
+        >
+          <Column field="event_title" header="Event Title" sortable />
+          <Column
+            field="dateTime"
+            header="Date & Time"
+            sortable
+            body={(rowData) => new Date(rowData.dateTime).toLocaleString()}
+          />
+          <Column field="location" header="Location" sortable />
+          <Column field="description" header="Description" sortable />
+          <Column body={actionBodyTemplate} header="Actions" />
+        </DataTable>
+      )}
 
-      {/* Dialog for editing event */}
       <Dialog
         header="Edit Event"
         visible={showDialog}
         onHide={() => setShowDialog(false)}
-        style={{ width: "50vw" }} // Dialog width and padding
+        style={{ width: "50vw" }}
         footer={
           <div>
             <Button
@@ -147,32 +175,35 @@ const ManageEvent = () => {
           <div className="space-y-6">
             <div className="space-y-2">
               <label
-                htmlFor="title"
+                htmlFor="event_title"
                 className="block text-gray-700 font-semibold"
               >
-                Title
+                Event Title
               </label>
               <input
-                id="title"
-                value={editingEvent.title}
+                id="event_title"
+                value={editingEvent.event_title}
                 onChange={(e) =>
-                  setEditingEvent({ ...editingEvent, title: e.target.value })
+                  setEditingEvent({
+                    ...editingEvent,
+                    event_title: e.target.value,
+                  })
                 }
                 className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="space-y-2">
               <label
-                htmlFor="time"
+                htmlFor="dateTime"
                 className="block text-gray-700 font-semibold"
               >
-                Time
+                Date and Time
               </label>
               <input
-                id="time"
-                value={editingEvent.time}
+                id="dateTime"
+                value={editingEvent.dateTime}
                 onChange={(e) =>
-                  setEditingEvent({ ...editingEvent, time: e.target.value })
+                  setEditingEvent({ ...editingEvent, dateTime: e.target.value })
                 }
                 type="datetime-local"
                 className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -211,6 +242,30 @@ const ManageEvent = () => {
                   })
                 }
                 rows={3}
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="image"
+                className="block text-gray-700 font-semibold"
+              >
+                Event Image
+              </label>
+              {editingEvent.image && (
+                <img
+                  src={`${import.meta.env.VITE_API_URL}${editingEvent.image}`}
+                  alt="Event"
+                  className="w-32 h-32 object-cover mb-2"
+                />
+              )}
+              <input
+                type="file"
+                id="image"
+                accept="image/*"
+                onChange={(e) =>
+                  setEditingEvent({ ...editingEvent, image: e.target.files[0] })
+                }
                 className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

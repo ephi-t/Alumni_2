@@ -1,52 +1,101 @@
-import React from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import NavBar from "./Pages/Navbar";
 import Alumni from "./Pages/Alumni";
 import Job from "./Pages/Job";
-import Donation from "./Pages/Donation";
+
 import Survey from "./Pages/Survey";
 import Home from "./Pages/Home";
 import Event from "./Pages/Event";
-import EventRegister from "./Pages/EventRegister";
+
 import Footer from "./Components/Footer";
 import Login from "./Pages/Login";
 import CreateAccount from "./Pages/CreateAccount";
 import DashboardApp from "./Pages/DasboardApp";
-import JobApplication from "./Pages/JobApplication";
-import DonationForm from "./Pages/DonationForm";
 
+import { AuthProvider } from "./AuthContext";
+import { useAuth } from "./AuthContext";
+import ProfileManagement from "./DashboardComponent/Side-component/ProfileMangemernt";
+import { ProtectedRoute, PublicOnlyRoute } from "./Pages/ProtectedRoute";
+import AdminRoute from "./Pages/AdminRoute";
 
 function App() {
   const location = useLocation();
-
+  const navigate = useNavigate();
   const isDashboardRoute = location.pathname.includes("/dashboard");
+
+  // Store current path when it changes
+  useEffect(() => {
+    localStorage.setItem("lastPath", location.pathname);
+  }, [location.pathname]);
+
+  // Check for stored path on initial load
+  useEffect(() => {
+    const lastPath = localStorage.getItem("lastPath");
+    if (lastPath && window.location.pathname === "/") {
+      navigate(lastPath, { replace: true });
+    }
+  }, []);
 
   return (
     <>
       {!isDashboardRoute ? (
         <div className="mx-4 sm:mx-[10%]">
-          {!isDashboardRoute && <NavBar />}
-
+          <NavBar />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/event" element={<Event />} />
-            <Route path="/events/:eventId/register" element={<EventRegister />} />
             <Route path="/alumni" element={<Alumni />} />
             <Route path="/job" element={<Job />} />
-            <Route path="/donation" element={<Donation />} />
-            <Route path="/donations/:donationId/donate" element={<DonationForm />} />
             <Route path="/survey" element={<Survey />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/createaccount" element={<CreateAccount />} />
-            <Route path="/jobs/:jobId/apply" element={<JobApplication />} />
-            <Route path="/dashboard/*" element={<DashboardApp />} />
-          </Routes>
+            {/* Protected Profile Route */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfileManagement />
+                </ProtectedRoute>
+              }
+            />
+            {/* Public only routes */}
+            <Route
+              path="/login"
+              element={
+                <PublicOnlyRoute>
+                  <Login />
+                </PublicOnlyRoute>
+              }
+            />
+            <Route
+              path="/createaccount"
+              element={
+                <PublicOnlyRoute>
+                  <CreateAccount />
+                </PublicOnlyRoute>
+              }
+            />
 
-          {!isDashboardRoute && <Footer />}
+            <Route
+              path="/dashboard/*"
+              element={
+                <AdminRoute>
+                  <DashboardApp />
+                </AdminRoute>
+              }
+            />
+          </Routes>
+          <Footer />
         </div>
       ) : (
         <Routes>
-          <Route path="/dashboard/*" element={<DashboardApp />} />
+          <Route
+            path="/dashboard/*"
+            element={
+              <ProtectedRoute>
+                <DashboardApp />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       )}
     </>

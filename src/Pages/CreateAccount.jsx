@@ -1,26 +1,44 @@
 import React, { useState } from "react";
-import { FaUser, FaEnvelope, FaLock, FaVenusMars } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import api from "../../api";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaPhone,
+  FaLinkedin,
+  FaFileUpload,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
+
+import { ToastContainer, toast } from "react-toastify";
+
+import "react-toastify/dist/ReactToastify.css";
 
 const CreateAccount = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    lastName: "",
-    firstName: "",
-    middleName: "",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    gender: "male",
     email: "",
-    gender: "",
     password: "",
-    confirmPassword: "",
-    userType: "",
-    file: null,
+    department: "",
+    batch: "",
+    linkedin_profile: "",
   });
-
-  const [errors, setErrors] = useState({});
-  const [showStudentUpload, setShowStudentUpload] = useState(false);
-  const [showAlumniUpload, setShowAlumniUpload] = useState(false);
+  const [tempDocument, setTempDocument] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "password") {
+      const error = validatePassword(value);
+      setPasswordError(error);
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -28,121 +46,90 @@ const CreateAccount = () => {
   };
 
   const handleFileChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      file: e.target.files[0],
-    }));
-  };
-
-  const handleUserTypeChange = (e) => {
-    const type = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      userType: type,
-    }));
-
-    if (type === "Student") {
-      setShowStudentUpload(true);
-      setShowAlumniUpload(false);
-    } else if (type === "Alumni") {
-      setShowStudentUpload(false);
-      setShowAlumniUpload(true);
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.lastName) newErrors.lastName = "Last Name is required";
-    if (!formData.firstName) newErrors.firstName = "First Name is required";
-    if (!formData.middleName) newErrors.middleName = "Middle Name is required";
-    if (!formData.email) newErrors.email = "Email is required";
-    if (!formData.password) newErrors.password = "Password is required";
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Confirm Password is required";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-    if (!formData.gender) newErrors.gender = "Gender is required";
-    if (!formData.userType) newErrors.userType = "User Type is required";
-
-    if (formData.userType === "Student" && !formData.file) {
-      newErrors.file = "Student ID image is required";
-    }
-    if (formData.userType === "Alumni" && !formData.file) {
-      newErrors.file = "Alumni tempo image is required";
-    }
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
+    setTempDocument(e.target.files[0]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    // Validate password before submission
+    const passwordValidationError = validatePassword(formData.password);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      toast.error("Please fix the password validation errors");
       return;
     }
 
-    const formDataToSubmit = new FormData();
-    formDataToSubmit.append("lastName", formData.lastName);
-    formDataToSubmit.append("firstName", formData.firstName);
-    formDataToSubmit.append("middleName", formData.middleName);
-    formDataToSubmit.append("email", formData.email);
-    formDataToSubmit.append("gender", formData.gender);
-    formDataToSubmit.append("password", formData.password);
-    formDataToSubmit.append("userType", formData.userType);
-    if (formData.file) {
-      formDataToSubmit.append("file", formData.file);
-    }
-
     try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        body: formDataToSubmit,
+      const formDataToSend = new FormData();
+      Object.keys(formData).forEach((key) => {
+        formDataToSend.append(key, formData[key]);
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to create account");
+      if (tempDocument) {
+        formDataToSend.append("tempDocument", tempDocument);
       }
 
-      const result = await response.json();
-      console.log("Account created successfully:", result);
+      const response = await api.post("/users/register", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      toast.success(
+        "Account created successfully! Please wait for admin approval.",
+        {
+          position: "top-center",
+        }
+      );
+      setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
-      console.error("Error submitting the form:", error.message);
+      console.error("Registration error:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Registration failed. Please try again.",
+        {
+          position: "top-center",
+        }
+      );
     }
   };
 
+  const validatePassword = (password) => {
+    if (password.length < 8 || password.length > 14) {
+      return "Password must be between 8 and 14 characters";
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(password)) {
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!/\d/.test(password)) {
+      return "Password must contain at least one number";
+    }
+    return "";
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Add departments array
+  const departments = [
+    "Information Technology",
+    "Information System",
+    "Computer Science",
+    "Software Engineering",
+  ];
+
   return (
-    <section className=" mt-10 px-6 md:px-10 lg:px-20 flex flex-col items-center justify-center min-h-screen bg-[rgb(255, 255, 255);]">
+    <section className="mt-10 px-6 md:px-10 lg:px-20 flex flex-col items-center justify-center min-h-screen bg-white">
+      <ToastContainer />
       <div className="w-full md:w-2/3 bg-white p-8 border border-spacing-4">
-        <h2 className="text-3xl font-bold text-blue-600  mb-6">
+        <h2 className="text-3xl font-bold text-blue-600 mb-6">
           Create Account
         </h2>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Last Name */}
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Last Name <span className="text-red-600">*</span>
-            </label>
-            <div className="relative">
-              <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`w-full pl-10 px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.lastName ? "border-red-500" : ""
-                }`}
-                placeholder="Last Name"
-              />
-            </div>
-            {errors.lastName && (
-              <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-            )}
-          </div>
-
           {/* First Name */}
           <div>
             <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -152,41 +139,54 @@ const CreateAccount = () => {
               <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
+                name="first_name"
+                value={formData.first_name}
                 onChange={handleChange}
-                className={`w-full pl-10 px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.firstName ? "border-red-500" : ""
-                }`}
+                className="w-full pl-10 px-4 py-2 border rounded-md text-gray-700"
                 placeholder="First Name"
+                autoComplete="off"
+                required
               />
             </div>
-            {errors.firstName && (
-              <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
-            )}
           </div>
 
           {/* Middle Name */}
           <div>
             <label className="block mb-2 text-sm font-medium text-gray-700">
-              Middle Name <span className="text-red-600">*</span>
+              Middle Name
             </label>
             <div className="relative">
               <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                name="middleName"
-                value={formData.middleName}
+                name="middle_name"
+                value={formData.middle_name}
                 onChange={handleChange}
-                className={`w-full pl-10 px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.middleName ? "border-red-500" : ""
-                }`}
+                className="w-full pl-10 px-4 py-2 border rounded-md text-gray-700"
                 placeholder="Middle Name"
+                autoComplete="off"
               />
             </div>
-            {errors.middleName && (
-              <p className="text-red-500 text-xs mt-1">{errors.middleName}</p>
-            )}
+          </div>
+
+          {/* Last Name */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Last Name <span className="text-red-600">*</span>
+            </label>
+            <div className="relative">
+              <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="w-full pl-10 px-4 py-2 border rounded-md text-gray-700"
+                placeholder="Last Name"
+                autoComplete="off"
+                required
+              />
+            </div>
           </div>
 
           {/* Email */}
@@ -201,98 +201,86 @@ const CreateAccount = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full pl-10 px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.email ? "border-red-500" : ""
-                }`}
-                placeholder="example@example.com"
+                className="w-full pl-10 px-4 py-2 border rounded-md text-gray-700"
+                placeholder="Email"
+                autoComplete="off"
+                required
               />
             </div>
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-            )}
           </div>
 
-          {/* Gender */}
+          {/* Department */}
           <div>
             <label className="block mb-2 text-sm font-medium text-gray-700">
-              Gender <span className="text-red-600">*</span>
+              Department <span className="text-red-600">*</span>
             </label>
-            <div>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.gender ? "border-red-500" : ""
-                }`}
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
-            {errors.gender && (
-              <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
-            )}
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-md text-gray-700"
+              required
+            >
+              <option value="">Select Department</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* User Type */}
-          <div className="mt-4">
+          {/* Batch */}
+          <div>
             <label className="block mb-2 text-sm font-medium text-gray-700">
-              User Type <span className="text-red-600">*</span>
+              Batch <span className="text-red-600">*</span>
             </label>
-            <div>
-              <select
-                name="userType"
-                value={formData.userType}
-                onChange={handleUserTypeChange}
-                className={`w-full px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.userType ? "border-red-500" : ""
-                }`}
-              >
-                <option value="">Select User Type</option>
-                <option value="Student">Student</option>
-                <option value="Alumni">Alumni</option>
-              </select>
+            <input
+              type="text"
+              name="batch"
+              value={formData.batch}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-md text-gray-700"
+              placeholder="Batch"
+              autoComplete="off"
+              required
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Temporary Document for Admin Verification{" "}
+              <span className="text-red-600">*</span>
+            </label>
+            <div className="relative">
+              <FaFileUpload className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="w-full pl-10 px-4 py-2 border rounded-md text-gray-700"
+                accept=".pdf,.doc,.docx"
+                required
+              />
             </div>
-            {errors.userType && (
-              <p className="text-red-500 text-xs mt-1">{errors.userType}</p>
-            )}
           </div>
 
-          {/* Upload Fields */}
-          {showStudentUpload && (
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Upload Student ID <span className="text-red-600">*</span>
-              </label>
+          {/* LinkedIn Profile */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              LinkedIn Profile
+            </label>
+            <div className="relative">
+              <FaLinkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type="file"
-                onChange={handleFileChange}
-                className="w-full border px-4 py-2 rounded-md text-gray-700"
+                type="url"
+                name="linkedin_profile"
+                value={formData.linkedin_profile}
+                onChange={handleChange}
+                className="w-full pl-10 px-4 py-2 border rounded-md text-gray-700"
+                placeholder="LinkedIn Profile URL"
+                autoComplete="off"
               />
-              {errors.file && (
-                <p className="text-red-500 text-xs mt-1">{errors.file}</p>
-              )}
             </div>
-          )}
-
-          {showAlumniUpload && (
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Upload Alumni Tempo Image{" "}
-                <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="file"
-                onChange={handleFileChange}
-                className="w-full border px-4 py-2 rounded-md text-gray-700"
-              />
-              {errors.file && (
-                <p className="text-red-500 text-xs mt-1">{errors.file}</p>
-              )}
-            </div>
-          )}
+          </div>
 
           {/* Password */}
           <div>
@@ -302,53 +290,41 @@ const CreateAccount = () => {
             <div className="relative">
               <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`w-full pl-10 px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.password ? "border-red-500" : ""
+                className={`w-full pl-10 pr-12 py-2 border rounded-md text-gray-700 ${
+                  passwordError ? "border-red-500" : ""
                 }`}
                 placeholder="Password"
+                required
               />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
-            {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            {passwordError && (
+              <p className="mt-1 text-sm text-red-500">{passwordError}</p>
             )}
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Confirm Password <span className="text-red-600">*</span>
-            </label>
-            <div className="relative">
-              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`w-full pl-10 px-4 py-2 border rounded-md text-gray-700 ${
-                  errors.confirmPassword ? "border-red-500" : ""
-                }`}
-                placeholder="Confirm Password"
-              />
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.confirmPassword}
-              </p>
-            )}
+            <p className="mt-1 text-xs text-gray-500">
+              Password must be 8-14 characters and contain at least one
+              uppercase letter, one lowercase letter, and one number.
+            </p>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md mt-4"
+            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-200"
           >
             Create Account
           </button>
         </form>
+
         <div className="mt-4">
           <p className="text-sm text-gray-600">
             Already Have an Account?
@@ -356,7 +332,6 @@ const CreateAccount = () => {
               Login
             </Link>
           </p>
-          <p className="text-sm text-gray-600"></p>
         </div>
       </div>
     </section>

@@ -1,158 +1,179 @@
 import React, { useState } from "react";
-import { FiUpload } from "react-icons/fi";
+import { ToastContainer, toast } from "react-toastify";
+import {
+  FaBriefcase,
+  FaBuilding,
+  FaMapMarkerAlt,
+  FaCalendarAlt,
+} from "react-icons/fa";
+import "react-toastify/dist/ReactToastify.css";
+import api from "../../../api.js";
 
 const CreateJob = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [companyName, setCompanyName] = useState(""); // New state for company name
-  const [deadline, setDeadline] = useState(""); // New state for deadline
-  const [jobImage, setJobImage] = useState(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    company_name: "",
+    description: "",
+    location: "",
+    deadline: "",
+  });
 
-  const handleImageChange = (e) => {
-    setJobImage(e.target.files[0]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Form submission logic goes here
+    try {
+      const token = localStorage.getItem("token");
+      await api.post("/jobs", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Job created successfully!");
+
+      setFormData({
+        title: "",
+        company_name: "",
+        description: "",
+        location: "",
+        deadline: "",
+      });
+    } catch (error) {
+      console.error("Error creating job:", error);
+      if (error.response) {
+        if (error.response.status === 401) {
+          toast.error("Authentication failed. Please log in again.");
+        } else {
+          toast.error(
+            `Failed to create job: ${
+              error.response.data.message || error.response.statusText
+            }`
+          );
+        }
+      } else if (error.request) {
+        toast.error(
+          "No response received from server. Please check if the backend is running."
+        );
+      } else {
+        toast.error(
+          "Failed to create job. Please check your network connection and try again."
+        );
+      }
+    }
   };
+
+  const inputStyle =
+    "w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all";
+  const labelStyle = "text-sm font-semibold text-gray-700 mb-2 block";
+  const headerStyle =
+    "bg-gradient-to-r from-teal-500 to-teal-700 p-6 text-white";
+  const buttonStyle =
+    "w-full bg-gradient-to-r from-teal-500 to-teal-700 text-white py-3 rounded-lg font-medium hover:from-teal-600 hover:to-teal-800 transform hover:scale-[1.02] transition-all duration-300";
 
   return (
-    <div className="container flex items-center justify-center">
-      <div className="bg-white rounded-lg border border-slate-500 p-8 w-full md:w-4/5 lg:w-3/5">
-        <h2 className="text-2xl font-semibold mb-6 text-center">Create Job</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Job Title */}
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Job Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
+    <div className="w-full min-h-screen bg-gray-50/50">
+      <ToastContainer />
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className={headerStyle}>
+            <h2 className="text-3xl font-bold">Create New Job Opportunity</h2>
+            <p className="mt-2 opacity-90">
+              Fill in the details to post a new job opening
+            </p>
           </div>
 
-          {/* Company Name */}
-          <div>
-            <label
-              htmlFor="companyName"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Company Name
-            </label>
-            <input
-              type="text"
-              id="companyName"
-              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="col-span-2 md:col-span-1">
+                <label className={labelStyle}>
+                  <FaBriefcase className="inline-block mr-2" />
+                  Job Title
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className={inputStyle}
+                  placeholder="e.g., Senior Software Engineer"
+                  required
+                />
+              </div>
 
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Description
-            </label>
-            <textarea
-              id="description"
-              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              rows="5"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            ></textarea>
-          </div>
+              <div className="col-span-2 md:col-span-1">
+                <label className={labelStyle}>
+                  <FaBuilding className="inline-block mr-2" />
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  name="company_name"
+                  value={formData.company_name}
+                  onChange={handleChange}
+                  className={inputStyle}
+                  placeholder="e.g., Tech Solutions Inc."
+                  required
+                />
+              </div>
 
-          {/* Location */}
-          <div>
-            <label
-              htmlFor="location"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Location
-            </label>
-            <input
-              type="text"
-              id="location"
-              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-            />
-          </div>
+              <div className="col-span-2">
+                <label className={labelStyle}>Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                  className={inputStyle}
+                  placeholder="Describe the job role, requirements, and responsibilities..."
+                  required
+                ></textarea>
+              </div>
 
-          {/* Deadline */}
-          <div>
-            <label
-              htmlFor="deadline"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Application Deadline
-            </label>
-            <input
-              type="date"
-              id="deadline"
-              className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              required
-            />
-          </div>
+              <div className="col-span-2 md:col-span-1">
+                <label className={labelStyle}>
+                  <FaMapMarkerAlt className="inline-block mr-2" />
+                  Location
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className={inputStyle}
+                  placeholder="e.g. Bole"
+                  required
+                />
+              </div>
 
-          {/* Job Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Upload Job Image
-            </label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
-              <div className="space-y-1 text-center">
-                <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                <div className="text-sm text-gray-600">
-                  <label
-                    htmlFor="jobImage"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500"
-                  >
-                    <span>Upload an Image</span>
-                    <input
-                      id="jobImage"
-                      name="jobImage"
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                </div>
-                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+              <div className="col-span-2 md:col-span-1">
+                <label className={labelStyle}>
+                  <FaCalendarAlt className="inline-block mr-2" />
+                  Deadline
+                </label>
+                <input
+                  type="date"
+                  name="deadline"
+                  value={formData.deadline}
+                  onChange={handleChange}
+                  className={inputStyle}
+                  required
+                />
               </div>
             </div>
-          </div>
 
-          {/* Create Job Button */}
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg w-full sm:w-auto"
-            >
-              Create Job
-            </button>
-          </div>
-        </form>
+            <div className="pt-4">
+              <button type="submit" className={buttonStyle}>
+                Post Job Opportunity
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
